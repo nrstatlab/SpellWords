@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpellWords Challenge</title>
+<meta name="description" content="A free, simple online game that helps students learn English spellings. No login, no storage, works in any browser.">
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #1d2433;
+    --muted: #5b6475;
+    --primary: #3b5bdb;
+    --primary-ink: #ffffff;
+    --good: #2b8a3e;
+    --good-bg: #e6f6ea;
+    --bad: #c92a2a;
+    --bad-bg: #fdecec;
+    --warn: #e67700;
+    --warn-bg: #fff4e0;
+    --line: #dde3ec;
+    --tile: #edf2ff;
+    --shadow: 0 6px 24px rgba(20, 30, 60, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161f;
+      --card: #1b212d;
+      --text: #e8ecf3;
+      --muted: #a2abbd;
+      --primary: #748ffc;
+      --primary-ink: #0d1220;
+      --good: #69db7c;
+      --good-bg: #1d3325;
+      --bad: #ff8787;
+      --bad-bg: #3a2124;
+      --warn: #ffc078;
+      --warn-bg: #3a2e1c;
+      --line: #2e3646;
+      --tile: #26304a;
+      --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
+  header h1 { font-size: 1.4rem; margin: 0; }
+  header h1 span { color: var(--primary); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  h2 { margin: 0 0 12px; font-size: 1.2rem; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .small { font-size: .9rem; }
+  label { font-weight: 600; display: block; margin: 12px 0 6px; }
+  input[type=text], textarea, select {
+    width: 100%; font: inherit; color: var(--text); background: var(--bg);
+    border: 2px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+  textarea { min-height: 160px; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice span {
+    display: block; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px;
+    cursor: pointer; text-align: center; font-weight: 600; user-select: none;
+  }
+  .choice span small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; }
+  .choice input:checked + span { border-color: var(--primary); background: var(--tile); }
+  .choice input:focus-visible + span { outline: 3px solid var(--primary); outline-offset: 2px; }
+  button {
+    font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 10px 16px;
+    cursor: pointer; background: var(--tile); color: var(--text);
+  }
+  button.primary { background: var(--primary); color: var(--primary-ink); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row.end { justify-content: flex-end; }
+  .grow { flex: 1; }
+  .hidden { display: none !important; }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { background: var(--tile); border-radius: 999px; padding: 4px 12px; font-size: .9rem; font-weight: 600; }
+  .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 16px; }
+  .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .3s; }
+  .prompt { text-align: center; }
+  .prompt .task { color: var(--muted); font-size: .95rem; margin-bottom: 8px; }
+  .big { font-size: 2rem; font-weight: 700; letter-spacing: .12em; margin: 8px 0; word-break: break-all; }
+  .clue { background: var(--bg); border-radius: 10px; padding: 10px 12px; margin: 10px 0; text-align: left; }
+  .clue b { color: var(--primary); }
+  .tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+  .tile {
+    width: 46px; height: 50px; font-size: 1.4rem; text-transform: lowercase; padding: 0;
+    background: var(--tile); border: 2px solid var(--line);
+  }
+  .tile.used { visibility: hidden; }
+  .answer { font-size: 1.4rem; text-align: center; letter-spacing: .08em; }
+  .feedback { border-radius: 12px; padding: 12px 14px; margin-top: 14px; }
+  .feedback.good { background: var(--good-bg); }
+  .feedback.bad { background: var(--bad-bg); }
+  .feedback.try { background: var(--warn-bg); }
+  .feedback h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .diff { font-family: ui-monospace, Consolas, monospace; font-size: 1.3rem; letter-spacing: .1em; word-break: break-all; }
+  .diff .ok { color: var(--good); }
+  .diff .miss { color: var(--warn); text-decoration: underline; font-weight: 700; }
+  .diff .extra { color: var(--bad); text-decoration: line-through; }
+  .tip { margin-top: 8px; }
+  .score-big { font-size: 3rem; font-weight: 800; color: var(--primary); text-align: center; margin: 0; }
+  .stars { text-align: center; font-size: 2rem; letter-spacing: .2em; }
+  ul.review { padding-left: 20px; margin: 8px 0; }
+  ul.review li { margin-bottom: 6px; }
+  .homelink { white-space: nowrap; font-weight: 600; padding: 10px 14px; border-radius: 10px; background: var(--tile); color: var(--text); text-decoration: none; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-weight: 600; white-space: nowrap; z-index: 10; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 12px 0 24px; }
+  @media (max-width: 480px) {
+    .big { font-size: 1.6rem; }
+    .tile { width: 40px; height: 46px; font-size: 1.2rem; }
+    .card { padding: 16px; }
+  }
+  @media print {
+    header .row, button, footer { display: none !important; }
+    .card { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>✏️ Spell<span>Words</span> Challenge</h1>
+    <div class="row">
+      <a class="homelink" href="index.html" title="All games">🏠 Games</a>
+      <button id="btnTeacher" type="button" title="Make your own word list">👩‍🏫 Teacher</button>
+    </div>
+  </header>
+
+  <!-- ============ START SCREEN ============ -->
+  <section id="screenStart" class="card">
+    <h2>Learn spellings by playing</h2>
+    <p class="muted">Hear a word, see its meaning, then spell it. You get a second try, and every mistake comes with a memory tip.</p>
+
+    <div id="customBanner" class="clue hidden"></div>
+
+    <label for="playerName">Your name (optional)</label>
+    <input type="text" id="playerName" maxlength="30" placeholder="e.g. Ravi" autocomplete="off">
+
+    <div id="levelBox">
+      <label>Choose a level</label>
+      <div class="choices" role="radiogroup">
+        <label class="choice"><input type="radio" name="level" value="easy" checked><span>🌱 Easy<small>Everyday words</small></span></label>
+        <label class="choice"><input type="radio" name="level" value="medium"><span>🌿 Medium<small>Tricky words</small></span></label>
+        <label class="choice"><input type="radio" name="level" value="hard"><span>🌳 Hard<small>Often misspelt</small></span></label>
+      </div>
+    </div>
+
+    <label>Choose a game mode</label>
+    <div class="choices" role="radiogroup">
+      <label class="choice"><input type="radio" name="mode" value="mixed" checked><span>🎲 Mixed<small>All three modes</small></span></label>
+      <label class="choice"><input type="radio" name="mode" value="listen"><span>🔊 Listen &amp; Spell<small>Hear and type</small></span></label>
+      <label class="choice"><input type="radio" name="mode" value="missing"><span>🧩 Missing Letters<small>Fill the gaps</small></span></label>
+      <label class="choice"><input type="radio" name="mode" value="scramble"><span>🔀 Unscramble<small>Arrange letters</small></span></label>
+    </div>
+
+    <label for="numWords">Number of words</label>
+    <select id="numWords">
+      <option value="5">5 words (quick)</option>
+      <option value="10" selected>10 words</option>
+      <option value="15">15 words</option>
+      <option value="all">All words in the list</option>
+    </select>
+
+    <div class="row end" style="margin-top:18px">
+      <button id="btnStart" class="primary" type="button">▶ Start game</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="screenGame" class="card hidden">
+    <div class="row">
+      <div class="stats grow">
+        <span class="pill" id="statQ">Word 1/10</span>
+        <span class="pill" id="statScore">⭐ 0</span>
+        <span class="pill" id="statStreak">🔥 0</span>
+      </div>
+      <button id="btnQuit" type="button" title="End game">✖</button>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+
+    <div class="prompt">
+      <div class="task" id="taskText"></div>
+      <div class="big" id="bigText"></div>
+      <div class="row" style="justify-content:center" id="speakRow">
+        <button id="btnSay" type="button">🔊 Hear word</button>
+        <button id="btnSlow" type="button">🐢 Slowly</button>
+      </div>
+      <div id="tiles" class="tiles"></div>
+    </div>
+
+    <div class="clue" id="clueBox">
+      <div><b>Meaning:</b> <span id="clueMeaning"></span></div>
+      <div id="clueSentenceRow"><b>Sentence:</b> <span id="clueSentence"></span></div>
+    </div>
+
+    <form id="answerForm" autocomplete="off">
+      <label for="answer" class="hidden">Your spelling</label>
+      <input type="text" id="answer" class="answer" placeholder="Type the spelling here"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <div class="row" style="margin-top:10px">
+        <button id="btnHint" type="button">💡 Hint (−3)</button>
+        <button id="btnClear" type="button" class="hidden">⌫ Clear</button>
+        <span class="grow"></span>
+        <button id="btnCheck" class="primary" type="submit">✔ Check</button>
+        <button id="btnNext" class="primary hidden" type="button">Next ➜</button>
+      </div>
+    </form>
+
+    <div id="feedback" class="feedback hidden" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ RESULT SCREEN ============ -->
+  <section id="screenResult" class="card hidden">
+    <h2 id="resultTitle" style="text-align:center">Well done!</h2>
+    <div class="stars" id="resultStars"></div>
+    <p class="score-big" id="resultScore">0</p>
+    <p class="muted" style="text-align:center" id="resultLine"></p>
+    <div id="reviewBox"></div>
+    <div class="row end" style="margin-top:16px">
+      <button id="btnPrint" type="button">🖨 Print / Save PDF</button>
+      <button id="btnRetryWrong" type="button">🔁 Practise my mistakes</button>
+      <button id="btnAgain" class="primary" type="button">🏠 Play again</button>
+    </div>
+  </section>
+
+  <!-- ============ TEACHER SCREEN ============ -->
+  <section id="screenTeacher" class="card hidden">
+    <h2>👩‍🏫 Make your own word list</h2>
+    <p class="muted small">Write one word per line, in this format:<br>
+      <code>word | meaning | example sentence | memory tip</code><br>
+      Only the word is required. The list goes inside the link itself, so there is nothing to store or upload. Share the link on WhatsApp, Google Classroom or the board.</p>
+    <textarea id="teacherText" spellcheck="false">necessary | needed; essential | Water is necessary for life. | One Collar, two Sleeves: 1 c, 2 s
+government | the group that rules a country | The government built a new road. | govern + ment, so keep the n
+environment | the world around us | Keep our environment clean. | environ + ment
+separate | to keep apart | Separate the red balls from the blue. | There is "a rat" in sep-a-rat-e
+receive | to get something | Did you receive my letter? | i before e, except after c</textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="btnMakeLink" class="primary" type="button">🔗 Create share link</button>
+      <button id="btnPlayList" type="button">▶ Play this list now</button>
+      <span class="grow"></span>
+      <button id="btnTeacherBack" type="button">Back</button>
+    </div>
+    <div id="linkBox" class="hidden">
+      <label for="shareLink">Share this link with students</label>
+      <input type="text" id="shareLink" readonly>
+      <div class="row" style="margin-top:8px">
+        <button id="btnCopy" type="button">📋 Copy link</button>
+        <span class="muted small" id="linkInfo"></span>
+      </div>
+    </div>
+  </section>
+
+  <footer>Free to use in class. Runs in your browser, with no login and no data saved on any server.</footer>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------------- Built-in word bank ----------------
+     Each entry: w = word, m = meaning, s = example sentence, t = memory tip */
+  const WORDS = {
+    easy: [
+      { w: "apple",   m: "a round red or green fruit", s: "I eat an apple every day.", t: "Double p: ap-ple." },
+      { w: "friend",  m: "a person you like and trust", s: "Ravi is my best friend.", t: "A friend is there to the END: fri-END." },
+      { w: "school",  m: "a place where children learn", s: "Our school starts at nine.", t: "s-c-h-o-o-l: the 'k' sound is spelled 'ch'." },
+      { w: "water",   m: "the clear liquid we drink", s: "Please drink more water.", t: "wa-ter: only one t." },
+      { w: "happy",   m: "feeling glad", s: "She was happy with her marks.", t: "Double p, then y." },
+      { w: "garden",  m: "land where flowers or vegetables grow", s: "We planted roses in the garden.", t: "gar + den." },
+      { w: "yellow",  m: "the colour of a ripe banana", s: "The sun looks yellow.", t: "Double l: yel-low." },
+      { w: "people",  m: "men, women and children", s: "Many people came to the fair.", t: "peo-ple: say 'pe-o-ple' to remember the o." },
+      { w: "teacher", m: "a person who teaches", s: "Our teacher explains things clearly.", t: "teach + er." },
+      { w: "because", m: "for the reason that", s: "I stayed home because it rained.", t: "Big Elephants Can Always Understand Small Elephants." },
+      { w: "family",  m: "parents and their children", s: "My family visited Kurnool.", t: "fam-i-ly: there is an i in the middle." },
+      { w: "letter",  m: "a written message, or a sign like A or B", s: "I wrote a letter to my uncle.", t: "Double t: let-ter." },
+      { w: "orange",  m: "a round juicy fruit; also a colour", s: "He peeled an orange.", t: "or + an + ge." },
+      { w: "sister",  m: "a girl who has the same parents as you", s: "My sister loves to sing.", t: "sis + ter." }
+    ],
+    medium: [
+      { w: "beautiful",   m: "very pretty or pleasing", s: "The sunset was beautiful.", t: "Big Elephants Are Useful: b-e-a-u, then 'tiful'." },
+      { w: "February",    m: "the second month of the year", s: "Exams begin in February.", t: "Feb-RU-ary: don't forget the first r." },
+      { w: "Wednesday",   m: "the day after Tuesday", s: "We have sports on Wednesday.", t: "Say it as it's spelled: Wed-nes-day." },
+      { w: "library",     m: "a place with books to read or borrow", s: "I borrowed a book from the library.", t: "li-BRA-ry: two r's." },
+      { w: "knowledge",   m: "what you know and understand", s: "Reading increases knowledge.", t: "know + ledge. The k is silent." },
+      { w: "environment", m: "the natural world around us", s: "Plant trees to protect the environment.", t: "environ + ment: keep the n before m." },
+      { w: "government",  m: "the group of people who rule a country", s: "The government opened a new college.", t: "govern + ment: keep the n." },
+      { w: "separate",    m: "to keep apart; not together", s: "Keep wet and dry waste separate.", t: "There is 'a rat' in sep-A-RAT-e." },
+      { w: "believe",     m: "to think something is true", s: "I believe you can do it.", t: "Never beLIEve a LIE." },
+      { w: "receive",     m: "to get or be given something", s: "You will receive a prize.", t: "i before e, except after c: rec-EI-ve." },
+      { w: "calendar",    m: "a chart showing days and months", s: "Mark the date on the calendar.", t: "It ends in -dar, not -der." },
+      { w: "definitely",  m: "without any doubt", s: "I will definitely come.", t: "It has 'finite' inside: de-FINITE-ly." },
+      { w: "different",   m: "not the same", s: "Every leaf is different.", t: "Double f: dif-fer-ent." },
+      { w: "address",     m: "where someone lives", s: "Write your address clearly.", t: "Double d, double s." }
+    ],
+    hard: [
+      { w: "necessary",     m: "needed; essential", s: "Water is necessary for life.", t: "One Collar, two Sleeves: 1 c, 2 s." },
+      { w: "accommodate",   m: "to provide room or space for", s: "The hall can accommodate 500 people.", t: "Big enough to accommodate two c's AND two m's." },
+      { w: "embarrass",     m: "to make someone feel shy or ashamed", s: "Don't embarrass him in front of others.", t: "Really Red, Shy Smile: 2 r, 2 s." },
+      { w: "occurrence",    m: "something that happens", s: "Rain in April is a rare occurrence.", t: "Double c, double r, ends in -ence." },
+      { w: "conscience",    m: "the inner sense of right and wrong", s: "My conscience told me to return the money.", t: "con + science." },
+      { w: "rhythm",        m: "a regular, repeated pattern of sound", s: "Clap to the rhythm of the song.", t: "Rhythm Helps Your Two Hips Move." },
+      { w: "privilege",     m: "a special right or advantage", s: "It is a privilege to meet you.", t: "No 'd' in privilege: pri-vi-lege." },
+      { w: "questionnaire", m: "a set of written questions", s: "Please fill in the questionnaire.", t: "question + naire, with a double n." },
+      { w: "millennium",    m: "a period of one thousand years", s: "A new millennium began in 2001.", t: "Two l's and two n's: mil-len-ni-um." },
+      { w: "pronunciation", m: "the way a word is spoken", s: "Her pronunciation is very clear.", t: "There is no 'noun' in pronunciation: pro-NUN-ciation." },
+      { w: "mischievous",   m: "playfully naughty", s: "The mischievous monkey stole a banana.", t: "mis-chie-vous: only three syllables, so no 'i' before -ous." },
+      { w: "entrepreneur",  m: "a person who starts a business", s: "She became a successful entrepreneur.", t: "entre + pre + neur." },
+      { w: "committee",     m: "a group chosen to do a task", s: "The committee met on Monday.", t: "Double m, double t, double e." },
+      { w: "occasion",      m: "a special event or time", s: "Diwali is a happy occasion.", t: "Two c's, one s." }
+    ]
+  };
+
+  /* ---------------- Helpers ---------------- */
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const screens = ["screenStart", "screenGame", "screenResult", "screenTeacher"];
+  const show = (id) => { screens.forEach(s => $(s).classList.toggle("hidden", s !== id)); window.scrollTo(0, 0); };
+  const radio = (name) => document.querySelector(`input[name=${name}]:checked`).value;
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 2200);
+  }
+
+  /* ---------------- Sound effects (no audio files needed) ---------------- */
+  let actx;
+  function beep(freqs) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      freqs.forEach((f, i) => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.frequency.value = f; o.type = "sine";
+        const t0 = actx.currentTime + i * 0.12;
+        g.gain.setValueAtTime(0.15, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.25);
+        o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + 0.26);
+      });
+    } catch (e) { /* sound is optional */ }
+  }
+
+  /* ---------------- Text-to-speech (built into the browser) ---------------- */
+  const canSpeak = "speechSynthesis" in window;
+  let voice = null;
+  function pickVoice() {
+    if (!canSpeak) return;
+    const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+    const pref = ["en-IN", "en-GB", "en-US"];
+    voice = pref.map(l => vs.find(v => v.lang.replace("_", "-") === l)).find(Boolean) || vs[0] || null;
+  }
+  if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function say(text, rate = 0.85) {
+    if (!canSpeak) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.lang = voice ? voice.lang : "en-IN";
+    u.rate = rate;
+    speechSynthesis.speak(u);
+  }
+
+  /* ---------------- Custom list via the link (no storage) ---------------- */
+  function encodeList(text) {
+    const bytes = new TextEncoder().encode(text);
+    let bin = ""; bytes.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function decodeList(code) {
+    const b64 = code.replace(/-/g, "+").replace(/_/g, "/");
+    const bin = atob(b64);
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+  function parseList(text) {
+    return text.split(/\r?\n/).map(line => {
+      const [w = "", m = "", s = "", t = ""] = line.split("|").map(x => x.trim());
+      return { w, m, s, t };
+    }).filter(x => /^[A-Za-z][A-Za-z' -]*$/.test(x.w) && x.w.length <= 30).slice(0, 100);
+  }
+
+  let customList = null;
+  function readHash() {
+    const m = location.hash.match(/list=([A-Za-z0-9_-]+)/);
+    customList = null;
+    if (m) {
+      try { const list = parseList(decodeList(m[1])); if (list.length) customList = list; } catch (e) { /* bad link */ }
+    }
+    const banner = $("customBanner");
+    if (customList) {
+      banner.innerHTML = `📚 <b>Your teacher's word list is loaded</b> (${customList.length} words). <button type="button" id="btnUseDefault">Use built-in words instead</button>`;
+      banner.classList.remove("hidden");
+      $("levelBox").classList.add("hidden");
+      $("btnUseDefault").onclick = () => { history.replaceState(null, "", location.pathname + location.search); readHash(); };
+    } else {
+      banner.classList.add("hidden");
+      $("levelBox").classList.remove("hidden");
+    }
+  }
+  window.addEventListener("hashchange", readHash);
+
+  /* ---------------- Game state ---------------- */
+  let G = null;
+
+  function startGame(list) {
+    const n = $("numWords").value;
+    const modePref = radio("mode");
+    const modes = ["listen", "missing", "scramble"];
+    let words = shuffle(list);
+    if (n !== "all") words = words.slice(0, +n);
+    G = {
+      name: $("playerName").value.trim(),
+      words: words.map((x, i) => ({ ...x, mode: modePref === "mixed" ? modes[i % 3] : modePref })),
+      i: 0, score: 0, streak: 0, best: 0, correct: 0,
+      mistakes: [], hints: 0, tries: 0, done: false, source: list
+    };
+    // speech not available: Listen mode would be unfair, so use Missing Letters instead
+    if (!canSpeak) G.words.forEach(w => { if (w.mode === "listen") w.mode = "missing"; });
+    show("screenGame");
+    loadWord();
+  }
+
+  function makeBlanks(word) {
+    const letters = word.split("");
+    const idx = letters.map((c, i) => i).filter(i => i > 0 && /[a-z]/i.test(letters[i]));
+    const k = Math.max(1, Math.round(idx.length * (word.length > 7 ? 0.45 : 0.35)));
+    const hide = new Set(shuffle(idx).slice(0, k));
+    return letters.map((c, i) => hide.has(i) ? "_" : c).join(" ");
+  }
+
+  function scramble(word) {
+    const letters = word.toLowerCase().replace(/[^a-z]/g, "").split("");
+    let s, guard = 0;
+    do { s = shuffle(letters); guard++; } while (s.join("") === letters.join("") && guard < 20);
+    return s;
+  }
+
+  function hideWord(sentence, word) {
+    if (!sentence) return "";
+    const re = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    return esc(sentence).replace(re, "_____");
+  }
+
+  function loadWord() {
+    const cur = G.words[G.i];
+    G.tries = 0; G.hintUsed = 0; G.done = false;
+    $("statQ").textContent = `Word ${G.i + 1}/${G.words.length}`;
+    $("statScore").textContent = `⭐ ${G.score}`;
+    $("statStreak").textContent = `🔥 ${G.streak}`;
+    $("bar").style.width = (G.i / G.words.length * 100) + "%";
+    $("answer").value = ""; $("answer").disabled = false; $("answer").readOnly = false;
+    $("feedback").classList.add("hidden");
+    $("btnCheck").classList.remove("hidden"); $("btnNext").classList.add("hidden");
+    $("btnHint").disabled = false;
+    $("tiles").innerHTML = ""; $("btnClear").classList.add("hidden");
+
+    $("clueMeaning").textContent = cur.m || "(no meaning given)";
+    const sent = hideWord(cur.s, cur.w);
+    $("clueSentence").innerHTML = sent;
+    $("clueSentenceRow").classList.toggle("hidden", !sent);
+    $("speakRow").classList.toggle("hidden", !canSpeak);
+
+    if (cur.mode === "listen") {
+      $("taskText").textContent = "🔊 Listen to the word and type its spelling";
+      $("bigText").textContent = "? ? ?";
+      setTimeout(() => say(cur.w), 300);
+    } else if (cur.mode === "missing") {
+      $("taskText").textContent = "🧩 Fill in the missing letters, then type the whole word";
+      $("bigText").textContent = makeBlanks(cur.w);
+    } else {
+      $("taskText").textContent = "🔀 Tap the letters in the right order (or type)";
+      $("bigText").textContent = "";
+      $("btnClear").classList.remove("hidden");
+      scramble(cur.w).forEach((ch) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "tile"; b.textContent = ch;
+        b.onclick = () => { if (G.done) return; $("answer").value += ch; b.classList.add("used"); b.dataset.used = "1"; };
+        $("tiles").appendChild(b);
+      });
+    }
+    setTimeout(() => $("answer").focus(), 50);
+  }
+
+  function resetTiles() {
+    $("answer").value = "";
+    document.querySelectorAll(".tile").forEach(t => { t.classList.remove("used"); delete t.dataset.used; });
+  }
+
+  /* LCS-based comparison: shows which letters were right, missing or extra */
+  function diffHTML(attempt, correct) {
+    const a = attempt.toLowerCase(), c = correct.toLowerCase();
+    const n = a.length, m = c.length;
+    const L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+      L[i][j] = a[i] === c[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    let i = 0, j = 0, out = "";
+    while (i < n && j < m) {
+      if (a[i] === c[j]) { out += `<span class="ok">${esc(correct[j])}</span>`; i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) { out += `<span class="extra">${esc(attempt[i])}</span>`; i++; }
+      else { out += `<span class="miss">${esc(correct[j])}</span>`; j++; }
+    }
+    while (i < n) { out += `<span class="extra">${esc(attempt[i++])}</span>`; }
+    while (j < m) { out += `<span class="miss">${esc(correct[j++])}</span>`; }
+    return out;
+  }
+
+  function feedback(kind, html) {
+    const f = $("feedback");
+    f.className = "feedback " + kind; f.innerHTML = html;
+  }
+
+  function check(e) {
+    e.preventDefault();
+    if (G.done) { next(); return; }
+    const cur = G.words[G.i];
+    const val = $("answer").value;
+    if (!val.trim()) { toast("Type your spelling first"); $("answer").focus(); return; }
+    G.tries++;
+    const tip = cur.t ? `<div class="tip">💡 <b>Memory tip:</b> ${esc(cur.t)}</div>` : "";
+
+    if (norm(val) === norm(cur.w)) {
+      const base = G.tries === 1 ? 10 : 5;
+      const bonus = G.streak >= 2 ? 2 : 0;
+      const pts = Math.max(1, base + bonus - G.hintUsed * 3);
+      G.score += pts; G.streak++; G.best = Math.max(G.best, G.streak); G.correct++;
+      const praise = ["Excellent!", "Super!", "Well done!", "Brilliant!", "Great job!", "Perfect!"][Math.floor(Math.random() * 6)];
+      feedback("good", `<h3>✅ ${praise} +${pts} points</h3>
+        <div class="diff"><span class="ok">${esc(cur.w)}</span></div>${tip}`);
+      beep([660, 880]);
+      finishWord();
+    } else if (G.tries === 1) {
+      feedback("try", `<h3>🤔 Almost! Try once more.</h3>
+        <div class="muted small">Check every letter carefully. You can tap "Hear word" again.</div>`);
+      beep([300]);
+      if (cur.mode === "scramble") resetTiles(); else $("answer").select();
+    } else {
+      G.streak = 0;
+      G.mistakes.push({ ...cur, attempt: val.trim() });
+      feedback("bad", `<h3>❌ The correct spelling is:</h3>
+        <div class="diff">${esc(cur.w)}</div>
+        <div class="small muted" style="margin-top:6px">Your answer compared with it:</div>
+        <div class="diff">${diffHTML(val.trim(), cur.w)}</div>
+        <div class="small muted">Green = correct · <span style="color:var(--warn)"><u>underlined</u></span> = missing · <span style="color:var(--bad)"><s>crossed</s></span> = extra</div>
+        ${tip}`);
+      beep([300, 220]);
+      finishWord();
+    }
+    $("statScore").textContent = `⭐ ${G.score}`;
+    $("statStreak").textContent = `🔥 ${G.streak}`;
+  }
+
+  function finishWord() {
+    G.done = true;
+    $("answer").readOnly = true;
+    $("btnHint").disabled = true;
+    $("btnCheck").classList.add("hidden");
+    $("btnNext").classList.remove("hidden");
+    $("btnNext").textContent = G.i + 1 < G.words.length ? "Next ➜" : "See results 🏁";
+    $("bigText").textContent = G.words[G.i].w;
+    $("tiles").innerHTML = "";
+    $("btnNext").focus();
+    if (canSpeak) say(G.words[G.i].w);
+  }
+
+  function next() {
+    G.i++;
+    if (G.i < G.words.length) loadWord(); else results();
+  }
+
+  function hint() {
+    if (G.done) return;
+    const cur = G.words[G.i];
+    const w = cur.w;
+    const typed = $("answer").value;
+    // keep the correct start the student already has, then reveal one more letter
+    let k = 0; while (k < typed.length && k < w.length && typed[k].toLowerCase() === w[k].toLowerCase()) k++;
+    if (k >= w.length) { toast("Your spelling already looks complete. Press Check!"); return; }
+    G.hintUsed++; G.hints++;
+    if (cur.mode === "scramble") {
+      resetTiles();
+      const prefix = w.slice(0, k + 1).toLowerCase();
+      $("answer").value = prefix;
+      const tiles = [...document.querySelectorAll(".tile")];
+      for (const ch of prefix) { const t = tiles.find(x => !x.dataset.used && x.textContent === ch); if (t) { t.dataset.used = "1"; t.classList.add("used"); } }
+    } else {
+      $("answer").value = w.slice(0, k + 1);
+    }
+    toast(`Hint used: −3 points`);
+    $("answer").focus();
+    if (G.hintUsed >= Math.ceil(w.length / 2)) $("btnHint").disabled = true;
+  }
+
+  function results() {
+    $("bar").style.width = "100%";
+    const total = G.words.length;
+    const pct = Math.round(G.correct / total * 100);
+    const stars = pct >= 90 ? 3 : pct >= 60 ? 2 : pct >= 30 ? 1 : 0;
+    $("resultStars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+    const who = G.name ? `, ${G.name}` : "";
+    $("resultTitle").textContent = (pct >= 90 ? "🏆 Outstanding" : pct >= 60 ? "🎉 Well done" : pct >= 30 ? "👍 Good effort" : "💪 Keep practising") + who + "!";
+    $("resultScore").textContent = G.score + " points";
+    $("resultLine").textContent = `${G.correct} of ${total} correct (${pct}%) · Best streak: ${G.best} · Hints used: ${G.hints} · ${new Date().toLocaleDateString()}`;
+    if (G.mistakes.length) {
+      $("reviewBox").innerHTML = `<h3>📒 Words to practise</h3><ul class="review">` +
+        G.mistakes.map(x => `<li><b>${esc(x.w)}</b>: you wrote <s>${esc(x.attempt)}</s>${x.t ? `<br><span class="small muted">💡 ${esc(x.t)}</span>` : ""}</li>`).join("") +
+        `</ul><p class="small muted">Tip: write each word 3 times and say it aloud.</p>`;
+      $("btnRetryWrong").classList.remove("hidden");
+    } else {
+      $("reviewBox").innerHTML = `<p style="text-align:center">You spelled every word correctly. Try a harder level next!</p>`;
+      $("btnRetryWrong").classList.add("hidden");
+    }
+    show("screenResult");
+    beep(pct >= 60 ? [523, 659, 784, 1047] : [440, 523]);
+  }
+
+  /* ---------------- Wire up buttons ---------------- */
+  $("btnStart").onclick = () => {
+    const list = customList || WORDS[radio("level")];
+    startGame(list);
+  };
+  $("answerForm").addEventListener("submit", check);
+  $("btnNext").onclick = next;
+  $("btnHint").onclick = hint;
+  $("btnClear").onclick = resetTiles;
+  $("btnSay").onclick = () => say(G.words[G.i].w);
+  $("btnSlow").onclick = () => say(G.words[G.i].w, 0.45);
+  $("btnQuit").onclick = () => { if (confirm("End this game and see your results?")) results(); };
+  $("btnAgain").onclick = () => show("screenStart");
+  $("btnPrint").onclick = () => window.print();
+  $("btnRetryWrong").onclick = () => {
+    const list = G.mistakes.map(({ attempt, mode, ...rest }) => rest);
+    const n = $("numWords"); const old = n.value; n.value = "all";
+    startGame(list); n.value = old;
+  };
+
+  // Teacher tools
+  $("btnTeacher").onclick = () => show("screenTeacher");
+  $("btnTeacherBack").onclick = () => show("screenStart");
+  $("btnMakeLink").onclick = () => {
+    const list = parseList($("teacherText").value);
+    if (!list.length) { toast("Add at least one word"); return; }
+    const text = list.map(x => [x.w, x.m, x.s, x.t].join(" | ")).join("\n");
+    const url = location.origin + location.pathname + "#list=" + encodeList(text);
+    $("shareLink").value = url;
+    $("linkInfo").textContent = `${list.length} words in this link`;
+    $("linkBox").classList.remove("hidden");
+    $("shareLink").select();
+  };
+  $("btnCopy").onclick = async () => {
+    try { await navigator.clipboard.writeText($("shareLink").value); toast("Link copied!"); }
+    catch (e) { $("shareLink").select(); document.execCommand && document.execCommand("copy"); toast("Link copied"); }
+  };
+  $("btnPlayList").onclick = () => {
+    const list = parseList($("teacherText").value);
+    if (!list.length) { toast("Add at least one word"); return; }
+    startGame(list);
+  };
+
+  readHash();
+})();
+</script>
+</body>
+</html>

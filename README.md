@@ -1,11 +1,23 @@
-# ✏️ SpellWords Challenge
+# 🎓 Classroom Games
 
-A free, simple online game that teaches students the **spelling of English words**.
-Everything is in **one file** (`index.html`). There is **no server, no database, no login and no storage plan** to pay for.
+Three free learning games for students. There is **no server, no database, no login and no storage plan** to pay for.
+
+| File | Game |
+|---|---|
+| `index.html` | Home page with links to all games |
+| `spelling.html` | ✏️ **SpellWords Challenge**: English spelling |
+| `sudoku.html` | 🧩 **Sudoku**: logical thinking |
+| `arithmetic.html` | ➗ **Arithmetic Practice**: +, −, ×, ÷ and times tables |
+
+Each game is a single self-contained file, so you can also copy just one file to a pendrive.
+
+---
+
+# ✏️ SpellWords Challenge
 
 ## How to play
 
-1. Open `index.html` in any browser (phone, tablet, laptop or smart board).
+1. Open `spelling.html` (or `index.html` and choose the game) in any browser (phone, tablet, laptop or smart board).
 2. Type your name (optional), then choose a **level** (Easy / Medium / Hard), a **game mode** and how many words to play.
 3. Spell each word. You get **two tries**, and every word comes with its meaning, an example sentence and a memory tip.
 4. At the end you see your score, stars, accuracy and a **"Words to practise"** list.
@@ -37,13 +49,48 @@ necessary | needed | Water is necessary for life. | One Collar, two Sleeves
 Press **Create share link**. The whole word list is stored **inside the link**, after the `#` sign, so nothing is uploaded or saved anywhere.
 Send the link on WhatsApp or Google Classroom, or show it as a QR code. Students who open it get your list.
 
+Teacher links made before the home page existed (`index.html#list=...`) still work: they open the spelling game automatically.
+
+---
+
+# 🧩 Sudoku
+
+Fill the grid so that every **row**, **column** and **bold square** has each number exactly once.
+
+- **Levels:** 🐣 Kids (4×4, numbers 1–4), 🌱 Easy, 🌿 Medium, 🌳 Hard (9×9).
+- **A new puzzle every time.** Puzzles are generated in the browser, and every puzzle has **exactly one solution**, so students never need to guess.
+- **Learning help:** ✏️ Notes (pencil marks), 💡 Hint, ↶ Undo, an option to show mistakes straight away, and highlighting of the row, column, square and same numbers.
+- **Keyboard:** numbers 1–9, arrow keys to move, Backspace to erase, N for notes, U to undo.
+- Finishing shows time, mistakes, hints and a star rating. The **How to play & solving tips** section teaches simple solving strategies.
+
+**Why it is good:** Sudoku builds logical reasoning, patience, concentration and the habit of checking, which are the same thinking skills needed in mathematics and statistics.
+
+---
+
+# ➗ Arithmetic Practice
+
+- **Practise:** Addition, Subtraction, Multiplication, Division, Mixed, or **Times tables 2 to 20**.
+- **Levels:** 1 (single digit), 2 (two-digit), 3 (challenge, e.g. 345 + 278, 37 × 18, 375 ÷ 15). Division answers are always whole numbers.
+- **Game types:**
+  - 📝 **10 Questions:** two tries, a "too big / too small / very close" clue, then **step-by-step working** if still wrong.
+  - ⚡ **60-second Sprint:** answer as many as possible, then review every mistake with its working.
+- **Mental-maths methods shown in the working:**
+  - Addition: *make a ten* (8 + 7 → 8 + 2 = 10, 10 + 5 = 15) and *split by place value* (47 + 38 → 47 + 30 = 77, 77 + 8 = 85)
+  - Subtraction: *take away in parts*, then check by adding
+  - Multiplication: *repeated addition* for small numbers and the *distributive method* (23 × 7 = 20 × 7 + 3 × 7)
+  - Division: *split into easy parts* (84 ÷ 7 → 70 ÷ 7 + 14 ÷ 7) and checking with multiplication
+- An on-screen number pad on phones, so the keyboard never covers the question.
+- The results screen shows score, accuracy, average time per answer, a printable report and **Practise my mistakes**.
+
+---
+
 ## 🌐 Put it online free (GitHub Pages)
 
 1. In this repository on GitHub, go to **Settings → Pages**.
 2. Under *Source*, choose **Deploy from a branch**, then pick the branch and the `/ (root)` folder, and **Save**.
-3. After a minute your game is live at `https://<your-username>.github.io/SpellWords/`.
+3. After a minute the games are live at `https://<your-username>.github.io/SpellWords/`.
 
-You can also just copy `index.html` to a pendrive and open it offline. It works without the internet, except the spoken voice on some devices.
+You can also copy the files to a pendrive and open them offline. They work without the internet, except the spoken voice in the spelling game on some devices.
 
 ## ✅ Why this design is good for teaching
 
@@ -61,7 +108,7 @@ You can also just copy `index.html` to a pendrive and open it offline. It works 
 - **Custom lists in seconds.** Make a list for any lesson, subject (e.g. statistics terms) or exam and share it as a link.
 - **Works everywhere.** Mobile-friendly, works on low-end phones, and has dark mode. It also works offline from a pendrive.
 - **Printable results.** Students can print or save their result as a PDF for records or homework proof.
-- **Easy to change.** The built-in word bank is a simple list at the top of the script in `index.html`. Anyone can add words.
+- **Easy to change.** The built-in word bank is a simple list at the top of the script in `spelling.html`. Anyone can add words.
 
 ## Technology
 

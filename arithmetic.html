@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arithmetic Practice</title>
+<meta name="description" content="Free arithmetic practice for students: addition, subtraction, multiplication, division and times tables, with step-by-step working.">
+<style>
+  :root {
+    --bg: #f4f7fb; --card: #ffffff; --text: #1d2433; --muted: #5b6475;
+    --primary: #d9480f; --primary-ink: #ffffff; --line: #dde3ec; --tile: #fff4e6;
+    --good: #2b8a3e; --good-bg: #e6f6ea; --bad: #c92a2a; --bad-bg: #fdecec;
+    --warn-bg: #fff4e0; --shadow: 0 6px 24px rgba(20, 30, 60, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161f; --card: #1b212d; --text: #e8ecf3; --muted: #a2abbd;
+      --primary: #ffa94d; --primary-ink: #1f1300; --line: #2e3646; --tile: #33281c;
+      --good: #69db7c; --good-bg: #1d3325; --bad: #ff8787; --bad-bg: #3a2124;
+      --warn-bg: #3a2e1c; --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
+  header h1 { font-size: 1.4rem; margin: 0; }
+  header h1 span { color: var(--primary); }
+  .homelink { white-space: nowrap; font-weight: 600; padding: 10px 14px; border-radius: 10px; background: var(--tile); color: var(--text); text-decoration: none; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  h2 { margin: 0 0 12px; font-size: 1.2rem; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .small { font-size: .9rem; }
+  .hidden { display: none !important; }
+  label.lbl { font-weight: 600; display: block; margin: 14px 0 6px; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice span { display: block; padding: 10px 8px; border: 2px solid var(--line); border-radius: 10px; cursor: pointer; text-align: center; font-weight: 600; user-select: none; }
+  .choice span small { display: block; font-weight: 400; color: var(--muted); font-size: .8rem; }
+  .choice input:checked + span { border-color: var(--primary); background: var(--tile); }
+  .choice input:focus-visible + span { outline: 3px solid var(--primary); outline-offset: 2px; }
+  select, input[type=text] { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 2px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; background: var(--tile); color: var(--text); }
+  button.primary { background: var(--primary); color: var(--primary-ink); }
+  button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row.end { justify-content: flex-end; }
+  .grow { flex: 1; }
+  .pill { background: var(--tile); border-radius: 999px; padding: 4px 12px; font-size: .9rem; font-weight: 600; }
+  .progress { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 12px 0 16px; }
+  .progress > div { height: 100%; width: 0; background: var(--primary); transition: width .3s linear; }
+  .question { font-size: clamp(2rem, 10vw, 3.2rem); font-weight: 800; text-align: center; margin: 10px 0; font-variant-numeric: tabular-nums; }
+  #answer { font-size: 1.8rem; text-align: center; font-weight: 700; }
+  #answer:focus { outline: none; border-color: var(--primary); }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+  .keypad button { font-size: 1.4rem; padding: 12px 0; }
+  .feedback { border-radius: 12px; padding: 12px 14px; margin-top: 14px; }
+  .feedback.good { background: var(--good-bg); }
+  .feedback.bad { background: var(--bad-bg); }
+  .feedback.try { background: var(--warn-bg); }
+  .feedback h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .steps { margin: 6px 0 0; padding-left: 20px; font-variant-numeric: tabular-nums; }
+  .score-big { font-size: 3rem; font-weight: 800; color: var(--primary); text-align: center; margin: 0; }
+  .stars { text-align: center; font-size: 2rem; letter-spacing: .2em; }
+  ul.review { padding-left: 20px; }
+  ul.review li { margin-bottom: 10px; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-weight: 600; white-space: nowrap; z-index: 10; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 4px 0 24px; }
+  @media (hover: hover) and (pointer: fine) { .keypad { display: none; } }
+  @media print { header a, button, footer { display: none !important; } .card { box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>➗ <span>Arithmetic</span> Practice</h1>
+    <a class="homelink" href="index.html">🏠 Games</a>
+  </header>
+
+  <!-- ============ SETUP ============ -->
+  <section id="screenStart" class="card">
+    <h2>Sharpen your number skills</h2>
+    <p class="muted">Every mistake comes with step-by-step working, so you learn the method and not just the answer.</p>
+
+    <label class="lbl" for="playerName">Your name (optional)</label>
+    <input type="text" id="playerName" maxlength="30" placeholder="e.g. Lakshmi" autocomplete="off">
+
+    <label class="lbl">What to practise</label>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="op" value="add" checked><span>➕ Addition</span></label>
+      <label class="choice"><input type="radio" name="op" value="sub"><span>➖ Subtraction</span></label>
+      <label class="choice"><input type="radio" name="op" value="mul"><span>✖️ Multiplication</span></label>
+      <label class="choice"><input type="radio" name="op" value="div"><span>➗ Division</span></label>
+      <label class="choice"><input type="radio" name="op" value="mix"><span>🎲 Mixed</span></label>
+      <label class="choice"><input type="radio" name="op" value="table"><span>📋 Times tables</span></label>
+    </div>
+
+    <div id="levelBox">
+      <label class="lbl">Level</label>
+      <div class="choices">
+        <label class="choice"><input type="radio" name="level" value="1" checked><span>🌱 Level 1<small>Small numbers</small></span></label>
+        <label class="choice"><input type="radio" name="level" value="2"><span>🌿 Level 2<small>Two-digit</small></span></label>
+        <label class="choice"><input type="radio" name="level" value="3"><span>🌳 Level 3<small>Challenge</small></span></label>
+      </div>
+    </div>
+
+    <div id="tableBox" class="hidden">
+      <label class="lbl" for="tableNum">Which table?</label>
+      <select id="tableNum"></select>
+    </div>
+
+    <label class="lbl">Game type</label>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="gtype" value="quiz" checked><span>📝 10 Questions<small>2 tries, full working</small></span></label>
+      <label class="choice"><input type="radio" name="gtype" value="sprint"><span>⚡ 60-second Sprint<small>How many can you do?</small></span></label>
+    </div>
+
+    <div class="row end" style="margin-top:18px">
+      <button id="btnStart" class="primary" type="button">▶ Start</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="screenGame" class="card hidden">
+    <div class="row">
+      <span class="pill" id="statQ"></span>
+      <span class="pill" id="statScore">⭐ 0</span>
+      <span class="pill" id="statStreak">🔥 0</span>
+      <span class="grow"></span>
+      <button id="btnQuit" type="button" title="End game">✖</button>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+
+    <div class="question" id="question" aria-live="polite"></div>
+    <form id="form" autocomplete="off">
+      <input type="text" id="answer" inputmode="numeric" pattern="[0-9]*" placeholder="?" aria-label="Your answer">
+      <div class="keypad" id="keypad"></div>
+      <div class="row end" style="margin-top:10px">
+        <button id="btnCheck" class="primary" type="submit">✔ Check</button>
+        <button id="btnNext" class="primary hidden" type="button">Next ➜</button>
+      </div>
+    </form>
+    <div id="feedback" class="feedback hidden" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="screenResult" class="card hidden">
+    <h2 id="resultTitle" style="text-align:center"></h2>
+    <div class="stars" id="resultStars"></div>
+    <p class="score-big" id="resultScore"></p>
+    <p class="muted" style="text-align:center" id="resultLine"></p>
+    <div id="reviewBox"></div>
+    <div class="row end" style="margin-top:16px">
+      <button id="btnPrint" type="button">🖨 Print / Save PDF</button>
+      <button id="btnRetry" type="button">🔁 Practise my mistakes</button>
+      <button id="btnAgain" class="primary" type="button">🏠 Play again</button>
+    </div>
+  </section>
+
+  <footer>Free to use in class. Runs in your browser with no login and no data stored.</footer>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const radio = (name) => document.querySelector(`input[name=${name}]:checked`).value;
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const show = (id) => { ["screenStart", "screenGame", "screenResult"].forEach(s => $(s).classList.toggle("hidden", s !== id)); window.scrollTo(0, 0); };
+  const SYM = { add: "+", sub: "−", mul: "×", div: "÷" };
+  const QUIZ_LEN = 10, SPRINT_SECS = 60;
+
+  let toastTimer;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("hidden"), 1800); }
+
+  let actx;
+  function beep(freqs) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      freqs.forEach((f, i) => {
+        const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f;
+        const t0 = actx.currentTime + i * 0.1;
+        g.gain.setValueAtTime(0.12, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
+        o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + 0.21);
+      });
+    } catch (e) { /* sound is optional */ }
+  }
+
+  // Table chooser 2..20 (students in India learn tables up to 20)
+  for (let t = 2; t <= 20; t++) $("tableNum").insertAdjacentHTML("beforeend", `<option value="${t}">Table of ${t}</option>`);
+  document.querySelectorAll("input[name=op]").forEach(r => r.addEventListener("change", () => {
+    const isTable = radio("op") === "table";
+    $("tableBox").classList.toggle("hidden", !isTable);
+    $("levelBox").classList.toggle("hidden", isTable);
+  }));
+
+  /* ---------------- Question generator ---------------- */
+  function makeQ(op, level) {
+    if (op === "mix") op = ["add", "sub", "mul", "div"][rnd(0, 3)];
+    let a, b;
+    if (op === "add" || op === "sub") {
+      const R = { 1: [1, 9], 2: [10, 99], 3: [100, 999] }[level];
+      a = rnd(...R); b = rnd(...R);
+      if (level === 1 && op === "sub") { a = rnd(5, 18); b = rnd(1, Math.min(9, a)); }
+      if (op === "sub" && b > a) [a, b] = [b, a];
+    } else if (op === "mul") {
+      if (level === 1) { a = rnd(2, 10); b = rnd(2, 10); }
+      else if (level === 2) { a = rnd(11, 99); b = rnd(2, 9); }
+      else { a = rnd(11, 60); b = rnd(11, 25); }
+    } else {                                   // division: always exact
+      const [d, q] = level === 1 ? [rnd(2, 9), rnd(1, 10)] : level === 2 ? [rnd(2, 12), rnd(11, 25)] : [rnd(11, 25), rnd(6, 40)];
+      a = d * q; b = d;
+    }
+    return mkQ(op, a, b);
+  }
+  function mkQ(op, a, b) {
+    const ans = op === "add" ? a + b : op === "sub" ? a - b : op === "mul" ? a * b : a / b;
+    return { op, a, b, ans, text: `${a} ${SYM[op]} ${b}` };
+  }
+
+  /* ---------------- Step-by-step working ---------------- */
+  function placeParts(n) {           // 345 -> [300, 40, 5]
+    const s = String(n), parts = [];
+    for (let i = 0; i < s.length; i++) { const p = +s[i] * 10 ** (s.length - 1 - i); if (p) parts.push(p); }
+    return parts.length ? parts : [0];
+  }
+  function explain(q) {
+    const { op, a, b, ans } = q, steps = [];
+    if (op === "add") {
+      if (a < 10 && b < 10 && a + b > 10) {
+        const need = 10 - Math.max(a, b), big = Math.max(a, b), small = Math.min(a, b);
+        steps.push(`Make a ten: ${big} + ${need} = 10`, `${small} − ${need} = ${small - need} is left over`, `10 + ${small - need} = <b>${ans}</b>`);
+      } else if (b < 10) {
+        steps.push(`Count on ${b} from ${a}: ${a} + ${b} = <b>${ans}</b>`);
+      } else {
+        let cur = a;
+        steps.push(`Split ${b} into ${placeParts(b).join(" + ")}`);
+        for (const p of placeParts(b)) { steps.push(`${cur} + ${p} = ${cur + p}`); cur += p; }
+        steps[steps.length - 1] = steps[steps.length - 1].replace(/= (\d+)$/, "= <b>$1</b>");
+      }
+      steps.push(`Check: ${ans} − ${b} = ${a} ✔`);
+    } else if (op === "sub") {
+      if (b < 10) {
+        steps.push(`Count back ${b} from ${a}: ${a} − ${b} = <b>${ans}</b>`);
+      } else {
+        let cur = a;
+        steps.push(`Split ${b} into ${placeParts(b).join(" + ")} and take away each part`);
+        for (const p of placeParts(b)) { steps.push(`${cur} − ${p} = ${cur - p}`); cur -= p; }
+        steps[steps.length - 1] = steps[steps.length - 1].replace(/= (\d+)$/, "= <b>$1</b>");
+      }
+      steps.push(`Check by adding: ${ans} + ${b} = ${a} ✔`);
+    } else if (op === "mul") {
+      if (a <= 10 && b <= 10) {
+        if (Math.min(a, b) <= 5) {
+          const big = Math.max(a, b), small = Math.min(a, b);
+          steps.push(`${a} × ${b} means ${small} groups of ${big}`, `${Array(small).fill(big).join(" + ")} = <b>${ans}</b>`);
+        } else {
+          steps.push(`${a} × ${b} = ${a} × ${b - 1} + ${a}`, `= ${a * (b - 1)} + ${a} = <b>${ans}</b>`);
+        }
+        steps.push(`Learn it from the table of ${a}: ${a} × ${b} = ${ans}`);
+      } else if (b < 10) {
+        const t = Math.floor(a / 10) * 10, o = a % 10;
+        steps.push(`Split ${a} into ${t} + ${o}`, `${t} × ${b} = ${t * b}`, `${o} × ${b} = ${o * b}`, `${t * b} + ${o * b} = <b>${ans}</b>`);
+      } else {
+        const t = Math.floor(b / 10) * 10, o = b % 10;
+        steps.push(`Split ${b} into ${t} + ${o}`, `${a} × ${t} = ${a * t}`, `${a} × ${o} = ${a * o}`, `${a * t} + ${a * o} = <b>${ans}</b>`);
+      }
+    } else {
+      if (ans >= 10 && ans % 10 === 0) {
+        steps.push(`${b} × ${ans / 10} = ${a / 10}, so ${b} × ${ans} = ${a}`, `So ${a} ÷ ${b} = <b>${ans}</b>`);
+      } else if (ans >= 10) {
+        const q1 = Math.floor(ans / 10) * 10, p1 = b * q1, p2 = a - p1;
+        steps.push(`Split ${a} into ${p1} + ${p2} (both divide by ${b})`, `${p1} ÷ ${b} = ${q1}`, `${p2} ÷ ${b} = ${p2 / b}`, `${q1} + ${p2 / b} = <b>${ans}</b>`);
+      } else {
+        steps.push(`Ask: ${b} × ? = ${a}`, `${b} × ${ans} = ${a}, so the answer is <b>${ans}</b>`);
+      }
+      steps.push(`Check: ${b} × ${ans} = ${a} ✔`);
+    }
+    return `<ol class="steps">${steps.map(s => `<li>${s}</li>`).join("")}</ol>`;
+  }
+
+  /* ---------------- Game ---------------- */
+  let G = null, timerId = null;
+
+  function buildQueue(op, level) {
+    if (op === "table") {
+      const n = +$("tableNum").value;
+      return shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).map(k => mkQ("mul", n, k));
+    }
+    const out = [], seen = new Set();
+    while (out.length < QUIZ_LEN) {
+      const q = makeQ(op, level);
+      if (seen.has(q.text) && seen.size < 60) continue;
+      seen.add(q.text); out.push(q);
+    }
+    return out;
+  }
+
+  function start(fixedQueue) {
+    const op = radio("op"), level = +radio("level"), type = radio("gtype");
+    G = {
+      op, level, sprint: type === "sprint" && !fixedQueue, name: $("playerName").value.trim(),
+      queue: fixedQueue || buildQueue(op, level), i: 0, score: 0, streak: 0, best: 0,
+      correct: 0, asked: 0, wrong: [], tries: 0, done: false, startT: Date.now(), times: []
+    };
+    show("screenGame");
+    clearInterval(timerId);
+    if (G.sprint) {
+      G.endAt = Date.now() + SPRINT_SECS * 1000;
+      timerId = setInterval(sprintTick, 200);
+    }
+    loadQ();
+    if (G.sprint) sprintTick();
+  }
+
+  function current() {
+    if (G.sprint && G.i >= G.queue.length) G.queue.push(G.op === "table" ? mkQ("mul", +$("tableNum").value, rnd(1, 10)) : makeQ(G.op, G.level));
+    return G.queue[G.i];
+  }
+
+  function sprintTick() {
+    const left = Math.max(0, G.endAt - Date.now());
+    $("statQ").textContent = `⏱ ${Math.ceil(left / 1000)}s`;
+    $("bar").style.width = (100 - left / (SPRINT_SECS * 10)) + "%";
+    if (left <= 0) { clearInterval(timerId); results(); }
+  }
+
+  function loadQ() {
+    const q = current();
+    G.tries = 0; G.done = false; G.qStart = Date.now();
+    $("question").textContent = q.text + " = ?";
+    $("answer").value = ""; $("answer").readOnly = false;
+    $("feedback").classList.add("hidden");
+    $("btnCheck").classList.remove("hidden"); $("btnNext").classList.add("hidden");
+    if (!G.sprint) {
+      $("statQ").textContent = `Q ${G.i + 1}/${G.queue.length}`;
+      $("bar").style.width = (G.i / G.queue.length * 100) + "%";
+    }
+    $("statScore").textContent = `⭐ ${G.score}`;
+    $("statStreak").textContent = `🔥 ${G.streak}`;
+    $("answer").focus();
+  }
+
+  function feedback(kind, html) { const f = $("feedback"); f.className = "feedback " + kind; f.innerHTML = html; }
+
+  function check(e) {
+    e.preventDefault();
+    if (G.done) { next(); return; }
+    const raw = $("answer").value.trim();
+    if (!/^-?\d+$/.test(raw)) { toast("Type a whole number"); $("answer").focus(); return; }
+    const q = current(), val = +raw;
+    G.tries++;
+
+    if (val === q.ans) {
+      const pts = G.sprint ? 1 : (G.tries === 1 ? 10 : 5) + (G.streak >= 2 ? 2 : 0);
+      G.score += pts; G.correct++; G.streak++; G.best = Math.max(G.best, G.streak);
+      G.times.push((Date.now() - G.qStart) / 1000);
+      beep([660, 880]);
+      if (G.sprint) { G.asked++; G.i++; flash(true); loadQ(); return; }
+      const praise = ["Correct!", "Super!", "Excellent!", "Well done!", "Brilliant!"][rnd(0, 4)];
+      feedback("good", `<h3>✅ ${praise} +${pts} points</h3><div>${q.text} = <b>${q.ans}</b></div>`);
+      finishQ();
+    } else if (G.tries === 1 && !G.sprint) {
+      const hint = Math.abs(val - q.ans) <= 2 ? "You are very close!" : val > q.ans ? "Your answer is too big." : "Your answer is too small.";
+      feedback("try", `<h3>🤔 Not quite. Try once more.</h3><div class="small">${hint}</div>`);
+      beep([300]);
+      $("answer").select();
+    } else {
+      G.streak = 0;
+      G.wrong.push({ ...q, given: val });
+      beep([300, 220]);
+      if (G.sprint) { G.asked++; G.i++; flash(false, q); loadQ(); return; }
+      feedback("bad", `<h3>❌ ${q.text} = ${q.ans}</h3><div class="small muted">You wrote ${val}. Here is how to work it out:</div>${explain(q)}`);
+      finishQ();
+    }
+    $("statScore").textContent = `⭐ ${G.score}`;
+    $("statStreak").textContent = `🔥 ${G.streak}`;
+  }
+
+  function flash(ok, q) {
+    toast(ok ? "✅ Correct" : `❌ ${q.text} = ${q.ans}`);
+  }
+
+  function finishQ() {
+    G.done = true; G.asked++;
+    $("answer").readOnly = true;
+    $("btnCheck").classList.add("hidden");
+    $("btnNext").classList.remove("hidden");
+    $("btnNext").textContent = G.i + 1 < G.queue.length ? "Next ➜" : "See results 🏁";
+    $("btnNext").focus();
+  }
+
+  function next() { G.i++; if (G.i < G.queue.length) loadQ(); else results(); }
+
+  function results() {
+    clearInterval(timerId);
+    const total = G.asked || 0;
+    const pct = total ? Math.round(G.correct / total * 100) : 0;
+    let stars;
+    if (G.sprint) stars = G.correct >= 25 ? 3 : G.correct >= 15 ? 2 : G.correct >= 6 ? 1 : 0;
+    else stars = pct >= 90 ? 3 : pct >= 60 ? 2 : pct >= 30 ? 1 : 0;
+    const who = G.name ? `, ${G.name}` : "";
+    $("resultTitle").textContent = (stars === 3 ? "🏆 Outstanding" : stars === 2 ? "🎉 Well done" : stars === 1 ? "👍 Good effort" : "💪 Keep practising") + who + "!";
+    $("resultStars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+    const avg = G.times.length ? (G.times.reduce((s, x) => s + x, 0) / G.times.length).toFixed(1) : "–";
+    $("resultScore").textContent = G.sprint ? `${G.correct} correct` : `${G.score} points`;
+    $("resultLine").textContent = (G.sprint ? `in ${SPRINT_SECS} seconds · ` : "") +
+      `${G.correct} of ${total} correct (${pct}%) · Best streak: ${G.best} · Avg time per correct answer: ${avg}s · ${new Date().toLocaleDateString()}`;
+    if (G.wrong.length) {
+      $("reviewBox").innerHTML = `<h3>📒 Learn from your mistakes</h3><ul class="review">` +
+        G.wrong.map(q => `<li><b>${q.text} = ${q.ans}</b> <span class="muted small">(you wrote ${q.given})</span>${explain(q)}</li>`).join("") + `</ul>`;
+      $("btnRetry").classList.remove("hidden");
+    } else {
+      $("reviewBox").innerHTML = total ? `<p style="text-align:center">No mistakes. Try the next level or the sprint!</p>` : "";
+      $("btnRetry").classList.add("hidden");
+    }
+    show("screenResult");
+    beep(stars >= 2 ? [523, 659, 784, 1047] : [440, 523]);
+  }
+
+  // On-screen keypad for phones
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "✔"].forEach(k => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = k;
+    if (k === "✔") b.className = "primary";
+    b.onclick = () => {
+      if (k === "✔") { $("form").requestSubmit ? $("form").requestSubmit() : check(new Event("submit")); return; }
+      if (G && G.done) return;
+      const inp = $("answer");
+      inp.value = k === "⌫" ? inp.value.slice(0, -1) : (inp.value + k).slice(0, 7);
+    };
+    $("keypad").appendChild(b);
+  });
+  // With the on-screen keypad, stop the phone keyboard from covering the question
+  if (window.matchMedia("(hover: none)").matches) $("answer").setAttribute("inputmode", "none");
+
+  $("form").addEventListener("submit", check);
+  $("btnStart").onclick = () => start();
+  $("btnNext").onclick = next;
+  $("btnQuit").onclick = () => { if (confirm("End now and see your results?")) results(); };
+  $("btnAgain").onclick = () => show("screenStart");
+  $("btnPrint").onclick = () => window.print();
+  $("btnRetry").onclick = () => start(shuffle(G.wrong.map(({ given, ...q }) => q)));
+})();
+</script>
+</body>
+</html>
